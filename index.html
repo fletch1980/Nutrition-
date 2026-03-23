@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Felicia's Fitness Suite</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0010; font-family: system-ui, sans-serif; min-height: 100vh; padding: 20px 16px 40px; }
+    .header { text-align: center; padding: 24px 0 18px; }
+    .header h1 { font-size: 26px; font-weight: 900; color: white; }
+    .header p { font-size: 13px; color: #9ca3af; margin-top: 4px; }
+
+    .collapsible { overflow: hidden; transition: max-height 0.35s ease; max-height: 0; }
+    .collapsible.open { max-height: 9999px; }
+    .collapse-card { border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
+    .collapse-trigger { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; cursor: pointer; border: none; background: transparent; text-align: left; }
+    .collapse-trigger:active { opacity: 0.8; }
+    .ct-left { display: flex; align-items: center; gap: 12px; }
+    .ct-icon { font-size: 24px; }
+    .ct-title { font-size: 16px; font-weight: 800; color: white; }
+    .ct-sub { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+    .ct-arrow { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.15); border-radius: 20px; padding: 4px 10px; white-space: nowrap; }
+    .collapse-body { padding: 0 20px 18px; }
+
+    .today-card { background: linear-gradient(135deg, #7c3aed, #db2777); }
+    .today-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; opacity: 0.85; text-transform: uppercase; }
+    .today-day { font-size: 22px; font-weight: 900; margin: 2px 0 0; }
+    .today-date { font-size: 13px; color: rgba(255,255,255,0.75); margin: 2px 0 1px; }
+    .today-theme { font-size: 13px; opacity: 0.85; }
+    .rest-day { text-align: center; font-size: 16px; padding: 10px 0 4px; opacity: 0.85; }
+    .energy-row { display: flex; gap: 6px; margin: 14px 0; }
+    .energy-btn { flex: 1; background: rgba(255,255,255,0.12); border: 1.5px solid transparent; border-radius: 10px; padding: 8px 4px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .energy-btn.sel { background: rgba(255,255,255,0.25); border-color: white; }
+    .energy-btn .e-emoji { font-size: 18px; }
+    .energy-btn .e-label { font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.9); margin-top: 3px; }
+    .energy-btn .e-time { font-size: 9px; color: rgba(255,255,255,0.6); margin-top: 1px; }
+    .workout-list { display: flex; flex-direction: column; gap: 7px; }
+    .w-item { background: rgba(255,255,255,0.12); border: 1.5px solid transparent; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s; }
+    .w-item.done { background: rgba(74,222,128,0.18); border-color: rgba(74,222,128,0.5); }
+    .w-item.next { background: rgba(255,255,255,0.2); border-color: white; animation: pulse 2s infinite; }
+    .w-item.dimmed { opacity: 0.45; }
+    .w-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+    .w-item.done .w-check { background: #4ade80; border-color: #4ade80; }
+    .w-item.next .w-check { background: white; border-color: white; color: #7c3aed; font-weight: 900; }
+    .w-info { flex: 1; }
+    .w-name { font-size: 13px; font-weight: 700; color: white; }
+    .w-desc { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 1px; }
+    .w-next-tag { font-size: 9px; font-weight: 900; color: white; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 2px; opacity: 0.8; }
+    .w-open-btn { background: rgba(255,255,255,0.25); border: none; border-radius: 7px; color: white; font-size: 11px; font-weight: 700; padding: 5px 10px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .w-item.next .w-open-btn { background: white; color: #7c3aed; }
+    .all-done-bar { background: rgba(74,222,128,0.2); border: 1.5px solid #4ade80; border-radius: 10px; padding: 10px 14px; text-align: center; margin-bottom: 10px; }
+    .all-done-bar .ad-title { font-size: 15px; font-weight: 900; color: #4ade80; }
+    .all-done-bar .ad-sub { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+
+    .apps-card { background: linear-gradient(135deg, #1a0030, #2d0050); border: 1px solid #7c3aed55; }
+    .inner-cards { display: flex; flex-direction: column; gap: 10px; }
+    a.card { display: block; text-decoration: none; border-radius: 12px; padding: 14px 16px; color: white; position: relative; overflow: hidden; transition: transform 0.15s, opacity 0.15s; }
+    a.card:active { transform: scale(0.97); opacity: 0.9; }
+    .card-glute { background: linear-gradient(135deg, #b91c1c, #ef4444); }
+    .card-goddess { background: linear-gradient(135deg, #7c3aed, #a855f7); }
+    .card-flex { background: linear-gradient(135deg, #4338ca, #6366f1); }
+    .card-waist { background: linear-gradient(135deg, #0369a1, #38bdf8); }
+    .card-tracker { background: linear-gradient(135deg, #065f46, #10b981); }
+    .card-dance { background: linear-gradient(135deg, #be185d, #f472b6); }
+    .card-icon { font-size: 22px; margin-bottom: 4px; }
+    .card-title { font-size: 15px; font-weight: 800; }
+    .card-sub { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+    .card-badge { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.25); border-radius: 20px; padding: 3px 8px; font-size: 10px; font-weight: 700; }
+    .card-badge.today-badge { background: white; color: #7c3aed; }
+
+    .streak-row { display: flex; gap: 10px; margin-bottom: 14px; }
+    .streak-card { flex: 1; background: #1a0030; border-radius: 14px; padding: 14px; text-align: center; }
+    .streak-val { font-size: 2rem; font-weight: 900; color: #f0abfc; }
+    .streak-lbl { font-size: 11px; color: #9ca3af; margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; }
+    .streak-card.fire .streak-val { color: #fb923c; }
+
+    .cal-box { background: #1a0030; border-radius: 16px; padding: 16px 20px; margin-bottom: 14px; }
+    .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .cal-title { color: white; font-size: 15px; font-weight: 800; }
+    .cal-nav { background: #7c3aed33; border: 1px solid #7c3aed66; color: #c084fc; border-radius: 8px; padding: 4px 10px; font-size: 13px; cursor: pointer; }
+    .cal-days-header { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 6px; }
+    .cal-days-header span { text-align: center; font-size: 10px; color: #6b7280; font-weight: 700; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+    .cal-day { aspect-ratio: 1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #6b7280; background: #0d0d1a; cursor: pointer; }
+    .cal-day:hover { border: 1px solid #7c3aed55; color: #c084fc; }
+    .cal-day.today { border: 1.5px solid #7c3aed; color: white; }
+    .cal-day.empty { background: transparent; cursor: default; pointer-events: none; }
+    .cal-day.future { opacity: 0.3; cursor: default; pointer-events: none; }
+    .cal-day.worked { color: white; }
+    .cal-day .dot-row { display: flex; gap: 2px; margin-top: 2px; flex-wrap: wrap; justify-content: center; }
+    .dot { width: 5px; height: 5px; border-radius: 50%; }
+    .dot-glute{background:#ef4444;}.dot-goddess{background:#a855f7;}.dot-flex{background:#6366f1;}.dot-waist{background:#38bdf8;}.dot-tracker{background:#10b981;}.dot-shred{background:#f97316;}.dot-dance{background:#f472b6;}
+    .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .leg-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #9ca3af; }
+    .leg-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    .shred-snap { background: #1a0030; border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; border: 1px solid #f9731633; }
+    .shred-snap-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .shred-snap-title { color: #f97316; font-size: 13px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+    .shred-snap-content { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .shred-level-pill { background: #f9731622; border: 1.5px solid #f97316; border-radius: 20px; padding: 5px 14px; font-size: 13px; font-weight: 800; color: #f97316; }
+    .shred-snap-note { font-size: 12px; color: #9ca3af; font-style: italic; }
+    .shred-btn-row { display: flex; gap: 8px; }
+    .log-shred-btn { background: linear-gradient(135deg,#f97316,#ea580c); border: none; border-radius: 10px; color: white; font-size: 12px; font-weight: 700; padding: 7px 14px; cursor: pointer; white-space: nowrap; }
+    .outline-btn { background: #1a0030; border: 1px solid #f97316; color: #f97316; border-radius: 10px; font-size: 12px; font-weight: 700; padding: 7px 14px; cursor: pointer; white-space: nowrap; }
+    .danger-btn { background: #1a0010; border: 1px solid #ef4444; color: #ef4444; border-radius: 10px; font-size: 12px; font-weight: 700; padding: 7px 14px; cursor: pointer; white-space: nowrap; }
+    .log-workout-btn { width: 100%; background: linear-gradient(135deg,#7c3aed,#db2777); border: none; border-radius: 12px; color: white; font-size: 14px; font-weight: 800; padding: 14px; cursor: pointer; margin-bottom: 14px; letter-spacing: 0.5px; }
+
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 50; align-items: flex-end; justify-content: center; }
+    .modal-bg.open { display: flex; }
+    .modal { background: #1a0030; border-radius: 20px 20px 0 0; padding: 24px 20px 36px; width: 100%; max-width: 480px; }
+    .modal h3 { color: white; font-size: 17px; font-weight: 800; margin-bottom: 16px; }
+    .modal-label { font-size: 12px; color: #d8b4fe; margin-bottom: 8px; display: block; }
+    .app-check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+    .app-check { background: #0d0d1a; border: 1.5px solid #7c3aed44; border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; }
+    .app-check.checked { border-color: #c084fc; background: #7c3aed22; }
+    .app-check .ac-icon { font-size: 1.2rem; }
+    .app-check .ac-name { font-size: 12px; color: #d8b4fe; font-weight: 600; }
+    .modal-btns { display: flex; gap: 10px; }
+    .modal-save { flex: 1; background: linear-gradient(135deg,#7c3aed,#db2777); border: none; border-radius: 10px; color: white; font-size: 14px; font-weight: 700; padding: 12px; cursor: pointer; }
+    .modal-save.orange { background: linear-gradient(135deg,#f97316,#ea580c); }
+    .modal-cancel { background: #0d0d1a; border: 1px solid #7c3aed44; border-radius: 10px; color: #9ca3af; font-size: 14px; padding: 12px 18px; cursor: pointer; }
+    .modal-delete { background: #1a0010; border: 1px solid #ef4444; border-radius: 10px; color: #ef4444; font-size: 14px; font-weight: 700; padding: 12px 18px; cursor: pointer; }
+    .shred-level-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 16px; }
+    .shred-level-btn { background: #0d0d1a; border: 1.5px solid #7c3aed44; border-radius: 10px; padding: 12px 6px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .shred-level-btn.sel { border-color: #f97316; background: #f9731622; }
+    .shred-level-btn .sl-label { font-size: 10px; font-weight: 800; color: #9ca3af; letter-spacing: 1px; }
+    .shred-level-btn .sl-time { font-size: 15px; font-weight: 900; color: white; margin: 3px 0; }
+    .shred-level-btn .sl-desc { font-size: 10px; color: #9ca3af; }
+    .shred-note-input { width: 100%; background: #0d0d1a; border: 1px solid #7c3aed44; border-radius: 8px; color: white; padding: 8px 12px; font-size: 13px; outline: none; margin-bottom: 16px; }
+    .day-app-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #7c3aed22; }
+    .day-app-row:last-child { border-bottom: none; }
+    .day-app-name { font-size: 13px; color: #d8b4fe; display: flex; align-items: center; gap: 8px; }
+    .remove-btn { background: #1a0010; border: 1px solid #ef444455; color: #ef4444; border-radius: 6px; font-size: 11px; font-weight: 700; padding: 4px 10px; cursor: pointer; }
+    .past-date-label { font-size: 12px; color: #9ca3af; margin-bottom: 14px; text-align: center; font-style: italic; }
+
+    .snapshot-box { background: #1a0030; border-radius: 16px; padding: 16px 20px; margin-bottom: 14px; }
+    .snapshot-box h3 { color: white; font-size: 13px; font-weight: 800; margin-bottom: 12px; letter-spacing: 1px; text-transform: uppercase; }
+    .snap-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 10px; }
+    .snap-item { background: #0d0d1a; border-radius: 10px; padding: 8px; text-align: center; }
+    .snap-val { font-size: 1.2rem; font-weight: 900; color: #c084fc; }
+    .snap-lbl { font-size: 10px; color: #6b7280; margin-top: 2px; }
+    .snap-bar-wrap { background: #0d0d1a; border-radius: 20px; height: 6px; overflow: hidden; }
+    .snap-bar { height: 100%; border-radius: 20px; background: linear-gradient(90deg,#7c3aed,#db2777); transition: width 0.4s; }
+    .snap-note { font-size: 10px; color: #6b7280; text-align: right; margin-top: 4px; }
+
+    .section-label { font-size: 11px; font-weight: 700; color: #6b7280; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; }
+    .tips-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 10px; }
+    .tip-chip { flex-shrink: 0; background: #1a0030; border: 1px solid #7c3aed55; border-radius: 20px; padding: 7px 13px; font-size: 12px; color: #d8b4fe; white-space: nowrap; cursor: pointer; }
+    .tip-chip.active { background: linear-gradient(135deg,#7c3aed,#db2777); border-color: transparent; color: white; font-weight: 700; }
+    .tip-detail { background: #1a0030; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; font-size: 13px; color: #d8b4fe; line-height: 1.6; }
+    .tip-detail strong { color: #f0abfc; }
+
+    .mm-box { background: #1a0030; border-radius: 16px; padding: 16px 20px; margin-bottom: 14px; }
+    .mm-box h3 { color: white; font-size: 13px; font-weight: 800; margin-bottom: 12px; letter-spacing: 1px; text-transform: uppercase; }
+    .mm-item { background: #0d0d1a; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+    .mm-item:last-child { margin-bottom: 0; }
+    .mm-ex { font-size: 13px; font-weight: 800; color: #f0abfc; margin-bottom: 3px; }
+    .mm-cue { font-size: 12px; color: #9ca3af; line-height: 1.5; }
+
+    @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.3)} 50%{box-shadow:0 0 0 6px rgba(255,255,255,0)} }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>👑 Felicia's Fitness Suite</h1>
+  <p>Your transformation toolkit</p>
+</div>
+
+<div class="collapse-card today-card">
+  <button class="collapse-trigger" onclick="toggleSection('todayBody','todayArrow')">
+    <div class="ct-left">
+      <div class="ct-icon">📅</div>
+      <div>
+        <div class="ct-title" id="todayCardTitle">Today's Plan</div>
+        <div class="ct-sub" id="todayCardSub">Tap to expand</div>
+      </div>
+    </div>
+    <div class="ct-arrow" id="todayArrow">▼ Show</div>
+  </button>
+  <div id="todayBody" class="collapsible collapse-body">
+    <div id="todayBanner"></div>
+  </div>
+</div>
+
+<div class="streak-row">
+  <div class="streak-card fire"><div class="streak-val" id="streakVal">0</div><div class="streak-lbl">🔥 Streak</div></div>
+  <div class="streak-card"><div class="streak-val" id="totalVal">0</div><div class="streak-lbl">💪 Total</div></div>
+  <div class="streak-card"><div class="streak-val" id="monthVal">0</div><div class="streak-lbl">📅 Month</div></div>
+</div>
+
+<div class="cal-box">
+  <div class="cal-header">
+    <button class="cal-nav" onclick="changeMonth(-1)">◀</button>
+    <div class="cal-title" id="calTitle"></div>
+    <button class="cal-nav" onclick="changeMonth(1)">▶</button>
+  </div>
+  <div class="cal-days-header"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+  <div class="cal-grid" id="calGrid"></div>
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot dot-shred"></div>Shred</div>
+    <div class="leg-item"><div class="leg-dot dot-glute"></div>Glute</div>
+    <div class="leg-item"><div class="leg-dot dot-goddess"></div>Goddess</div>
+    <div class="leg-item"><div class="leg-dot dot-flex"></div>Flex</div>
+    <div class="leg-item"><div class="leg-dot dot-waist"></div>Waist</div>
+    <div class="leg-item"><div class="leg-dot dot-tracker"></div>Tracker</div>
+    <div class="leg-item"><div class="leg-dot dot-dance"></div>Dance</div>
+  </div>
+</div>
+
+<div class="shred-snap">
+  <div class="shred-snap-header">
+    <div class="shred-snap-title">🔥 Today's Shred</div>
+    <div class="shred-btn-row" id="shredBtnRow"></div>
+  </div>
+  <div class="shred-snap-content" id="shredSnapContent"></div>
+</div>
+<div id="shredHistory" style="display:none;background:#0d0d1a;border-radius:12px;padding:12px 14px;margin-top:-8px;margin-bottom:14px;border:1px solid #f9731633;">
+  <div id="shredHistoryList"></div>
+</div>
+
+<button class="log-workout-btn" onclick="openModal(today())">✅ Log Today's Apps</button>
+
+<div class="collapse-card apps-card">
+  <button class="collapse-trigger" onclick="toggleSection('appsBody','appsArrow')">
+    <div class="ct-left">
+      <div class="ct-icon">🗂️</div>
+      <div>
+        <div class="ct-title">Your Apps</div>
+        <div class="ct-sub">Glute · Goddess · Flex · Waist · Dance · Tracker</div>
+      </div>
+    </div>
+    <div class="ct-arrow" id="appsArrow">▼ Show</div>
+  </button>
+  <div id="appsBody" class="collapsible collapse-body">
+    <div class="inner-cards">
+      <a href="https://fletch1980.github.io/bootyworkout-/" class="card card-glute" target="_blank" id="card-glute">
+        <div class="card-icon">🍑</div><div class="card-title">Glute Finisher</div><div class="card-sub">Bubble Butt Builder · Mon · Wed · Fri</div>
+      </a>
+      <a href="https://fletch1980.github.io/goddesstraining/" class="card card-goddess" target="_blank" id="card-goddess">
+        <div class="card-icon">✨</div><div class="card-title">Goddess Training</div><div class="card-sub">Hip Control · Core · Pelvic Floor</div>
+      </a>
+      <a href="https://fletch1980.github.io/Flexibility-/" class="card card-flex" target="_blank" id="card-flex">
+        <div class="card-icon">🌸</div><div class="card-title">Flexibility Training</div><div class="card-sub">Daily Routine · Deep Friday Session</div>
+      </a>
+      <a href="https://fletch1980.github.io/Waistcinch/" class="card card-waist" target="_blank" id="card-waist">
+        <div class="card-icon">⚡</div><div class="card-title">Waist Circuit</div><div class="card-sub">Tuesday & Thursday · Core Sculpting</div>
+      </a>
+      <a href="https://fletch1980.github.io/Cardio/" class="card card-dance" target="_blank" id="card-dance">
+        <div class="card-icon">💃</div><div class="card-title">Dance Cardio</div><div class="card-sub">Wed · Sat · Sun · Afrobeats · Hip Hop · Latin</div>
+      </a>
+      <a href="https://fletch1980.github.io/Fitness_tracker/" class="card card-tracker" target="_blank">
+        <div class="card-icon">📊</div><div class="card-title">Fitness Tracker</div><div class="card-sub">Protein · Overload · Recovery Log</div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="snapshot-box">
+  <h3>📊 Today's Snapshot</h3>
+  <div class="snap-grid">
+    <div class="snap-item"><div class="snap-val" id="snapProtein">—</div><div class="snap-lbl">Protein (g)</div></div>
+    <div class="snap-item"><div class="snap-val" id="snapSleep">—</div><div class="snap-lbl">Sleep (hrs)</div></div>
+    <div class="snap-item"><div class="snap-val" id="snapFeel">—</div><div class="snap-lbl">Body Feel</div></div>
+  </div>
+  <div class="snap-bar-wrap"><div class="snap-bar" id="snapBar" style="width:0%"></div></div>
+  <div class="snap-note" id="snapNote">Log in Tracker to fill this in</div>
+</div>
+
+<p class="section-label">💡 Quick Tips</p>
+<div class="tips-row">
+  <div class="tip-chip active" onclick="showTip(0)">🥩 Protein</div>
+  <div class="tip-chip" onclick="showTip(1)">💪 Squeeze</div>
+  <div class="tip-chip" onclick="showTip(2)">😴 Recovery</div>
+  <div class="tip-chip" onclick="showTip(3)">📈 Overload</div>
+  <div class="tip-chip" onclick="showTip(4)">🔥 Cardio Order</div>
+</div>
+<div class="tip-detail" id="tipDetail"></div>
+
+<div class="mm-box">
+  <h3>🧠 Mind-Muscle Cues</h3>
+  <div class="mm-item"><div class="mm-ex">Hip Thrust</div><div class="mm-cue">Drive through your heels. Squeeze glutes for 2 full seconds at the top. Feel it in the glute, not your lower back.</div></div>
+  <div class="mm-item"><div class="mm-ex">Cable / Band Kickback</div><div class="mm-cue">Slow down. Squeeze at full extension for 1–2 sec. If you feel it in your hip flexor or back, you've gone too fast.</div></div>
+  <div class="mm-item"><div class="mm-ex">Romanian Deadlift</div><div class="mm-cue">Feel the hamstring stretch on the way down. Drive hips forward to stand — glutes finish the movement.</div></div>
+  <div class="mm-item"><div class="mm-ex">Sumo Squat</div><div class="mm-cue">Push knees out. Pause at the bottom. Squeeze inner thighs and glutes together on the way up.</div></div>
+  <div class="mm-item"><div class="mm-ex">Every Exercise</div><div class="mm-cue">If you don't feel the target muscle, drop weight 20% and slow down. Mind-muscle beats heavy and sloppy every time.</div></div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">✅ What did you do today?</h3>
+    <div id="modalDateLabel" class="past-date-label" style="display:none;"></div>
+    <span class="modal-label" id="modalSubLabel">Tap everything you completed</span>
+    <div class="app-check-grid">
+      <div class="app-check" id="chk-shred" onclick="toggleCheck('shred')"><span class="ac-icon">🔥</span><span class="ac-name">Shred</span></div>
+      <div class="app-check" id="chk-glute" onclick="toggleCheck('glute')"><span class="ac-icon">🍑</span><span class="ac-name">Glute Finisher</span></div>
+      <div class="app-check" id="chk-goddess" onclick="toggleCheck('goddess')"><span class="ac-icon">✨</span><span class="ac-name">Goddess Training</span></div>
+      <div class="app-check" id="chk-flex" onclick="toggleCheck('flex')"><span class="ac-icon">🌸</span><span class="ac-name">Flexibility</span></div>
+      <div class="app-check" id="chk-waist" onclick="toggleCheck('waist')"><span class="ac-icon">⚡</span><span class="ac-name">Waist Circuit</span></div>
+      <div class="app-check" id="chk-dance" onclick="toggleCheck('dance')"><span class="ac-icon">💃</span><span class="ac-name">Dance Cardio</span></div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-delete" id="modalDeleteBtn" onclick="deleteWorkout()" style="display:none;">🗑 Delete</button>
+      <button class="modal-save" onclick="saveWorkout()">Save 💪</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="dayModalBg">
+  <div class="modal">
+    <h3 id="dayModalTitle">📅 Day Log</h3>
+    <div id="dayModalContent"></div>
+    <div class="modal-btns" style="margin-top:16px;">
+      <button class="modal-cancel" onclick="closeDayModal()">Close</button>
+      <button class="modal-save" id="dayModalEditBtn" onclick="editDayWorkout()">✏️ Edit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="shredModalBg">
+  <div class="modal">
+    <h3>🔥 Log Today's Shred</h3>
+    <span class="modal-label">Pick your level</span>
+    <div class="shred-level-grid">
+      <div class="shred-level-btn" id="sl-mini" onclick="selectLevel('mini')"><div class="sl-label">MINI</div><div class="sl-time">30 min</div><div class="sl-desc">Low energy</div></div>
+      <div class="shred-level-btn" id="sl-regular" onclick="selectLevel('regular')"><div class="sl-label">REGULAR</div><div class="sl-time">50–60</div><div class="sl-desc">Normal day</div></div>
+      <div class="shred-level-btn" id="sl-badass" onclick="selectLevel('badass')"><div class="sl-label">BAD ASS</div><div class="sl-time">60–75</div><div class="sl-desc">Bring it</div></div>
+    </div>
+    <span class="modal-label">Note (optional)</span>
+    <input type="text" class="shred-note-input" id="shredNoteInput" placeholder="e.g. felt strong, focused on legs..."/>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeShredModal()">Cancel</button>
+      <button class="modal-delete" id="shredDeleteBtn" onclick="deleteShred()" style="display:none;">🗑 Delete</button>
+      <button class="modal-save orange" onclick="saveShred()">Save 🔥</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function today(){var n=new Date(),y=n.getFullYear(),mo=n.getMonth()+1,d=n.getDate();return y+'-'+(mo<10?'0'+mo:mo)+'-'+(d<10?'0'+d:d);}
+  function localDow(){return new Date().getDay();}
+  function isoToFriendly(iso){return new Date(iso+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});}
+  function todayFriendly(){var n=new Date();return n.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});}
+  function toggleSection(bodyId,arrowId){var body=document.getElementById(bodyId),arrow=document.getElementById(arrowId),isOpen=body.classList.contains('open');body.classList.toggle('open',!isOpen);arrow.textContent=isOpen?'▼ Show':'▲ Hide';}
+
+  var DANCE_URL='https://fletch1980.github.io/Cardio/';
+
+  // dow: 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat
+  var WORKOUTS={
+    1:[
+      {id:'shred',  emoji:'🔥',name:'Shred',            desc:'Pick your energy level · Do this first',    link:null},
+      {id:'glute',  emoji:'🍑',name:'Glute Finisher',   desc:'15–25 min · Right after Shred',             link:'https://fletch1980.github.io/bootyworkout-/'},
+      {id:'goddess',emoji:'✨',name:'Goddess Training', desc:'Hip control · Core stamina · Pelvic floor', link:'https://fletch1980.github.io/goddesstraining/'},
+      {id:'flex',   emoji:'🌸',name:'Flexibility Daily',desc:'🏠 Evening · 15–20 min',                   link:'https://fletch1980.github.io/Flexibility-/'}
+    ],
+    2:[
+      {id:'shred',  emoji:'🔥',name:'Shred',            desc:'Pick your energy level · Do this first',    link:null},
+      {id:'goddess',emoji:'✨',name:'Goddess Training', desc:'Hip control · Core stamina · Pelvic floor', link:'https://fletch1980.github.io/goddesstraining/'},
+      {id:'waist',  emoji:'⏳',name:'Waist Circuit',   desc:'🏠 Evening · After Goddess · 20–25 min',    link:'https://fletch1980.github.io/Waistcinch/'},
+      {id:'flex',   emoji:'🌸',name:'Flexibility Daily',desc:'🏠 Evening · 15–20 min',                   link:'https://fletch1980.github.io/Flexibility-/'}
+    ],
+    3:[
+      {id:'shred',  emoji:'🔥',name:'Shred',            desc:'Pick your energy level · Do this first',    link:null},
+      {id:'glute',  emoji:'🍑',name:'Glute Finisher',   desc:'15–25 min · Right after Shred',             link:'https://fletch1980.github.io/bootyworkout-/'},
+      {id:'goddess',emoji:'✨',name:'Goddess Training', desc:'Hip control · Core stamina · Pelvic floor', link:'https://fletch1980.github.io/goddesstraining/'},
+      {id:'flex',   emoji:'🌸',name:'Flexibility Daily',desc:'🏠 Evening · 15–20 min',                   link:'https://fletch1980.github.io/Flexibility-/'},
+      {id:'dance',  emoji:'💃',name:'Dance Cardio',     desc:'🏠 Evening · Hip Hop · 25–30 min',          link:DANCE_URL}
+    ],
+    4:[
+      {id:'shred',  emoji:'🔥',name:'Shred',            desc:'Pick your energy level · Do this first',    link:null},
+      {id:'goddess',emoji:'✨',name:'Goddess Training', desc:'Hip control · Core stamina · Pelvic floor', link:'https://fletch1980.github.io/goddesstraining/'},
+      {id:'waist',  emoji:'⏳',name:'Waist Circuit',   desc:'🏠 Evening · After Goddess · 20–25 min',    link:'https://fletch1980.github.io/Waistcinch/'},
+      {id:'flex',   emoji:'🌸',name:'Flexibility Daily',desc:'🏠 Evening · 15–20 min',                   link:'https://fletch1980.github.io/Flexibility-/'}
+    ],
+    5:[
+      {id:'shred',  emoji:'🔥',name:'Shred',            desc:'Pick your energy level · Do this first',    link:null},
+      {id:'glute',  emoji:'🍑',name:'Glute Finisher',   desc:'15–25 min · Right after Shred',             link:'https://fletch1980.github.io/bootyworkout-/'},
+      {id:'goddess',emoji:'✨',name:'Goddess Training', desc:'Hip control · Core stamina · Pelvic floor', link:'https://fletch1980.github.io/goddesstraining/'},
+      {id:'flex',   emoji:'🌸',name:'Deep Flexibility', desc:'🏠 Evening · 30–40 min · Deep Friday',     link:'https://fletch1980.github.io/Flexibility-/'}
+    ],
+    6:[
+      {id:'dance',  emoji:'💃',name:'Dance Cardio',     desc:'Afrobeats · 25–30 min · Free on YouTube',   link:DANCE_URL}
+    ],
+    0:[
+      {id:'dance',  emoji:'💃',name:'Dance Cardio',     desc:'Latin · 25–30 min · Free on YouTube',       link:DANCE_URL}
+    ]
+  };
+
+  var THEMES={1:'Power Day 🔥',2:'Goddess & Waist Day 💜',3:'Burnout + Dance Day 🔥💃',4:'Goddess & Waist Day 🦵',5:'Full Glute Day 🍑',6:'Dance Day 💃',0:'Dance Day 💃'};
+  var DAYNAMES={0:'Sunday',1:'Monday',2:'Tuesday',3:'Wednesday',4:'Thursday',5:'Friday',6:'Saturday'};
+
+  var dow=localDow(),selectedEnergy='',checkedToday=new Set();
+
+  function renderBanner(){
+    var banner=document.getElementById('todayBanner');
+    var workouts=WORKOUTS[dow]||[];
+    var w=getW(),s=getS(),existing=w[today()]||[];
+    checkedToday=new Set(existing);
+    var sub=document.getElementById('todayCardSub');
+    if(sub) sub.textContent=THEMES[dow]||'';
+
+    var html='<div class="today-label">Today</div>'
+      +'<div class="today-day">'+DAYNAMES[dow]+'</div>'
+      +'<div class="today-date">'+todayFriendly()+'</div>'
+      +'<div class="today-theme">'+(THEMES[dow]||'')+'</div>';
+
+    var isRest=workouts.length===0;
+    if(isRest){html+='<div class="rest-day">🛁 Recover. Stretch. Eat your protein.</div>';banner.innerHTML=html;return;}
+
+    // show energy picker only on gym days (not pure dance days)
+    var hasGymWork=workouts.some(function(wk){return wk.id==='shred';});
+    if(hasGymWork){
+      html+='<div class="energy-row">'
+        +'<div class="energy-btn'+(selectedEnergy==='mini'?' sel':'')+'" onclick="pickEnergy(\'mini\')"><div class="e-emoji">😴</div><div class="e-label">Mini</div><div class="e-time">30 min</div></div>'
+        +'<div class="energy-btn'+(selectedEnergy==='normal'?' sel':'')+'" onclick="pickEnergy(\'normal\')"><div class="e-emoji">🙂</div><div class="e-label">Regular</div><div class="e-time">50–60 min</div></div>'
+        +'<div class="energy-btn'+(selectedEnergy==='badass'?' sel':'')+'" onclick="pickEnergy(\'badass\')"><div class="e-emoji">💪</div><div class="e-label">Bad Ass</div><div class="e-time">60–75 min</div></div>'
+        +'</div>';
+    }
+
+    var shredLogged=!!s[today()];
+    var allDone=workouts.every(function(wk){return wk.id==='shred'?shredLogged:checkedToday.has(wk.id);});
+    if(allDone) html+='<div class="all-done-bar"><div class="ad-title">🔥 You crushed it today!</div><div class="ad-sub">All workouts complete. Go recover like a goddess.</div></div>';
+
+    var nextId=null;
+    for(var i=0;i<workouts.length;i++){var wk=workouts[i];if(!(wk.id==='shred'?shredLogged:checkedToday.has(wk.id))){nextId=wk.id;break;}}
+
+    html+='<div class="workout-list">';
+    workouts.forEach(function(wk){
+      var done=wk.id==='shred'?shredLogged:checkedToday.has(wk.id);
+      var isNext=!allDone&&wk.id===nextId,dimmed=!done&&!isNext&&nextId!==null;
+      var cls='w-item'+(done?' done':'')+(isNext?' next':'')+(dimmed?' dimmed':'');
+      var checkIcon=done?'✅':(isNext?'▶':'');
+      var btnLabel=wk.id==='shred'?(done?'Edit 🔥':'Log 🔥'):(isNext?'Start →':'Open →');
+      var btnAction=wk.id==='shred'?'openShredModal()':"window.open('"+wk.link+"','_blank')";
+      html+='<div class="'+cls+'" onclick="toggleBannerCheck(\''+wk.id+'\')">'
+        +'<div class="w-check">'+checkIcon+'</div>'
+        +'<div class="w-info">'+(isNext?'<div class="w-next-tag">▶ UP NEXT</div>':'')+'<div class="w-name">'+wk.emoji+' '+wk.name+'</div><div class="w-desc">'+wk.desc+'</div></div>'
+        +'<button class="w-open-btn" onclick="event.stopPropagation();'+btnAction+'">'+btnLabel+'</button>'
+        +'</div>';
+    });
+    html+='</div>';
+    banner.innerHTML=html;
+  }
+
+  function pickEnergy(e){selectedEnergy=selectedEnergy===e?'':e;renderBanner();}
+
+  function toggleBannerCheck(id){
+    if(id==='shred'){openShredModal();return;}
+    var w=getW(),iso=today(),existing=w[iso]||[];
+    if(checkedToday.has(id)){checkedToday.delete(id);existing=existing.filter(function(a){return a!==id;});}
+    else{checkedToday.add(id);if(!existing.includes(id))existing.push(id);}
+    if(existing.length){w[iso]=existing;}else{delete w[iso];}
+    setW(w);renderBanner();renderCal();calcStats();
+  }
+
+  // TODAY badge on app cards — dance on Wed(3), Sat(6), Sun(0)
+  var activeCards={1:["card-glute","card-goddess","card-flex"],2:["card-goddess","card-waist","card-flex"],3:["card-glute","card-goddess","card-flex","card-dance"],4:["card-goddess","card-waist","card-flex"],5:["card-glute","card-goddess","card-flex"],6:["card-dance"],0:["card-dance"]};
+  activeCards[dow].forEach(function(id){var c=document.getElementById(id);if(!c)return;var b=document.createElement("div");b.className="card-badge today-badge";b.textContent="TODAY";c.appendChild(b);});
+
+  function getW(){try{return JSON.parse(localStorage.getItem('workouts')||'{}');}catch(e){try{return JSON.parse(sessionStorage.getItem('workouts')||'{}');}catch(e2){return {};}}}
+  function setW(w){try{localStorage.setItem('workouts',JSON.stringify(w));}catch(e){try{sessionStorage.setItem('workouts',JSON.stringify(w));}catch(e2){}}}
+  function getS(){try{return JSON.parse(localStorage.getItem('shred_logs')||'{}');}catch(e){try{return JSON.parse(sessionStorage.getItem('shred_logs')||'{}');}catch(e2){return {};}}}
+  function setS(s){try{localStorage.setItem('shred_logs',JSON.stringify(s));}catch(e){try{sessionStorage.setItem('shred_logs',JSON.stringify(s));}catch(e2){}}}
+  function safeGet(k){try{return localStorage.getItem(k);}catch(e){try{return sessionStorage.getItem(k);}catch(e2){return null;}}}
+
+  function calcStats(){
+    var w=getW(),s=getS();
+    var all=new Set([...Object.keys(w).filter(function(d){return w[d]&&w[d].length;}),...Object.keys(s).filter(function(d){return s[d];})]);
+    var dates=[...all].sort(function(a,b){return b.localeCompare(a);});
+    document.getElementById('totalVal').textContent=dates.length;
+    var now=new Date(),mo=now.getMonth(),yr=now.getFullYear();
+    document.getElementById('monthVal').textContent=dates.filter(function(d){var dt=new Date(d+'T12:00:00');return dt.getMonth()===mo&&dt.getFullYear()===yr;}).length;
+    var streak=0;
+    for(var i=0;i<365;i++){var n=new Date();n.setDate(n.getDate()-i);var y2=n.getFullYear(),mo2=n.getMonth()+1,d2=n.getDate();var ds=y2+'-'+(mo2<10?'0'+mo2:mo2)+'-'+(d2<10?'0'+d2:d2);if(all.has(ds)){streak++;}else if(i===0){}else break;}
+    document.getElementById('streakVal').textContent=streak;
+  }
+
+  var calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+  var appNames={shred:'🔥 Shred',glute:'🍑 Glute',goddess:'✨ Goddess',flex:'🌸 Flex',waist:'⚡ Waist',tracker:'📊 Tracker',dance:'💃 Dance'};
+  var levelLabels={mini:'MINI · 30 min',regular:'REGULAR · 50-60 min',badass:'BAD ASS · 60-75 min'};
+
+  function renderCal(){
+    var w=getW(),s=getS(),todayISO=today();
+    var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    document.getElementById('calTitle').textContent=months[calMonth]+' '+calYear;
+    var firstDay=new Date(calYear,calMonth,1).getDay(),daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+    var html='';
+    for(var i=0;i<firstDay;i++) html+='<div class="cal-day empty"></div>';
+    for(var d=1;d<=daysInMonth;d++){
+      var iso=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      var isFuture=iso>todayISO,apps=w[iso]||[],hasShred=!!s[iso],isToday=iso===todayISO,worked=apps.length||hasShred;
+      var dots=hasShred?'<div class="dot dot-shred"></div>':'';
+      apps.forEach(function(a){dots+='<div class="dot dot-'+a+'"></div>';});
+      var cls=['cal-day',isToday?'today':'',worked?'worked':'',isFuture?'future':''].filter(Boolean).join(' ');
+      html+='<div class="'+cls+'" onclick="'+(isFuture?'':("openCalDay('"+iso+"')"))+'"">'+d+(worked?'<div class="dot-row">'+dots+'</div>':'')+'</div>';
+    }
+    document.getElementById('calGrid').innerHTML=html;
+  }
+  function changeMonth(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCal();}
+  function openCalDay(iso){var w=getW(),s=getS();if((w[iso]&&w[iso].length)||s[iso]){openDayModal(iso);}else{openModal(iso);}}
+
+  var dayModalDate='';
+  function openDayModal(iso){
+    var w=getW(),s=getS(),apps=w[iso]||[],shred=s[iso];
+    dayModalDate=iso;
+    document.getElementById('dayModalTitle').textContent='📅 '+isoToFriendly(iso);
+    var html='';
+    if(shred) html+='<div class="day-app-row"><div class="day-app-name">🔥 Shred — <strong style="color:#f97316">'+(levelLabels[shred.level]||shred.level)+'</strong>'+(shred.note?' <span style="color:#9ca3af;font-style:italic;">"'+shred.note+'"</span>':'')+'</div><button class="remove-btn" onclick="removeShredFromDay()">Remove</button></div>';
+    apps.forEach(function(a){html+='<div class="day-app-row"><div class="day-app-name">'+(appNames[a]||a)+'</div><button class="remove-btn" onclick="removeAppFromDay(\''+a+'\')">Remove</button></div>';});
+    if(!html) html='<div style="text-align:center;color:#6b7280;font-size:13px;padding:16px 0;">Nothing logged for this day.</div>';
+    document.getElementById('dayModalContent').innerHTML=html;
+    document.getElementById('dayModalBg').classList.add('open');
+  }
+  function closeDayModal(){document.getElementById('dayModalBg').classList.remove('open');}
+  function editDayWorkout(){closeDayModal();openModal(dayModalDate);}
+  function removeAppFromDay(app){var w=getW(),iso=dayModalDate;if(w[iso]){w[iso]=w[iso].filter(function(a){return a!==app;});if(!w[iso].length)delete w[iso];}setW(w);renderCal();calcStats();renderBanner();var s=getS();if((w[iso]&&w[iso].length)||s[iso]){openDayModal(iso);}else{closeDayModal();}}
+  function removeShredFromDay(){var s=getS(),iso=dayModalDate;delete s[iso];setS(s);renderCal();calcStats();renderShredSnap();var w=getW();if(w[iso]&&w[iso].length){openDayModal(iso);}else{closeDayModal();}}
+
+  var checked=new Set(),modalDate='';
+  function openModal(iso){
+    iso=iso||today();modalDate=iso;
+    var w=getW(),s=getS(),existing=w[iso]||[],hasShred=!!s[iso];
+    checked=new Set(existing);
+    var isPast=iso<today();
+    ['shred','glute','goddess','flex','waist','dance'].forEach(function(a){var el=document.getElementById('chk-'+a);if(a==='shred'){el.classList.toggle('checked',hasShred);}else{el.classList.toggle('checked',checked.has(a));}});
+    var hasExisting=existing.length>0||hasShred;
+    if(isPast){document.getElementById('modalTitle').textContent='📅 Log Past Workout';document.getElementById('modalDateLabel').textContent=isoToFriendly(iso);document.getElementById('modalDateLabel').style.display='block';}
+    else{document.getElementById('modalTitle').textContent=hasExisting?'✏️ Edit Today\'s Log':'✅ What did you do today?';document.getElementById('modalDateLabel').style.display='none';}
+    document.getElementById('modalSubLabel').textContent=hasExisting?'Tap to add or remove apps':'Tap everything you completed';
+    document.getElementById('modalDeleteBtn').style.display=hasExisting?'block':'none';
+    document.getElementById('modalBg').classList.add('open');
+  }
+  function closeModal(){document.getElementById('modalBg').classList.remove('open');}
+  function toggleCheck(a){if(a==='shred'){document.getElementById('chk-shred').classList.toggle('checked');}else{var el=document.getElementById('chk-'+a);if(checked.has(a)){checked.delete(a);el.classList.remove('checked');}else{checked.add(a);el.classList.add('checked');}}}
+  function saveWorkout(){
+    var w=getW(),s=getS(),iso=modalDate;
+    if(checked.size){w[iso]=Array.from(checked);}else{delete w[iso];}setW(w);
+    var shredChecked=document.getElementById('chk-shred').classList.contains('checked');
+    if(shredChecked&&!s[iso]){s[iso]={level:'regular',note:'logged retroactively'};setS(s);}
+    else if(!shredChecked&&s[iso]&&iso!==today()){delete s[iso];setS(s);}
+    closeModal();renderCal();calcStats();renderBanner();
+    if(iso===today())renderShredSnap();
+    showToast(checked.size||shredChecked?'Workout saved! 💪':'Log cleared');
+  }
+  function deleteWorkout(){var w=getW(),s=getS(),iso=modalDate;delete w[iso];if(iso!==today()){delete s[iso];setS(s);}setW(w);closeModal();renderCal();calcStats();renderBanner();if(iso===today())renderShredSnap();showToast('Workout log deleted 🗑');}
+  document.getElementById('modalBg').addEventListener('click',function(e){if(e.target===document.getElementById('modalBg'))closeModal();});
+  document.getElementById('dayModalBg').addEventListener('click',function(e){if(e.target===document.getElementById('dayModalBg'))closeDayModal();});
+
+  var selectedLevel='';
+  function openShredModal(){var s=getS(),existing=s[today()];selectedLevel=existing?existing.level:'';['mini','regular','badass'].forEach(function(l){document.getElementById('sl-'+l).classList.toggle('sel',l===selectedLevel);});document.getElementById('shredNoteInput').value=existing?existing.note||'':'';document.getElementById('shredDeleteBtn').style.display=existing?'block':'none';document.getElementById('shredModalBg').classList.add('open');}
+  function closeShredModal(){document.getElementById('shredModalBg').classList.remove('open');}
+  function selectLevel(l){selectedLevel=l;['mini','regular','badass'].forEach(function(x){document.getElementById('sl-'+x).classList.toggle('sel',x===l);});}
+  function saveShred(){if(!selectedLevel)return showToast('Pick a Shred level first!');var s=getS();s[today()]={level:selectedLevel,note:document.getElementById('shredNoteInput').value};setS(s);closeShredModal();renderCal();calcStats();renderShredSnap();renderBanner();showToast('Shred logged! 🔥');}
+  function deleteShred(){var s=getS();delete s[today()];setS(s);closeShredModal();renderCal();calcStats();renderShredSnap();renderBanner();showToast('Shred log deleted 🗑');}
+  document.getElementById('shredModalBg').addEventListener('click',function(e){if(e.target===document.getElementById('shredModalBg'))closeShredModal();});
+
+  function renderShredSnap(){var s=getS(),entry=s[today()];document.getElementById('shredSnapContent').innerHTML=entry?'<div class="shred-level-pill">'+(levelLabels[entry.level]||entry.level)+'</div>'+(entry.note?'<div class="shred-snap-note">"'+entry.note+'"</div>':''):'<div style="font-size:12px;color:#6b7280;">Not logged yet</div>';document.getElementById('shredBtnRow').innerHTML=entry?'<button class="outline-btn" onclick="toggleShredHistory()">📋 History</button><button class="outline-btn" onclick="openShredModal()">✏️ Edit</button><button class="danger-btn" onclick="deleteShred()">🗑</button>':'<button class="outline-btn" onclick="toggleShredHistory()">📋 History</button><button class="log-shred-btn" onclick="openShredModal()">+ Log Shred</button>';}
+  function toggleShredHistory(){var el=document.getElementById('shredHistory');var isOpen=el.style.display==='block';if(!isOpen)renderShredHistory();el.style.display=isOpen?'none':'block';}
+  function renderShredHistory(){var s=getS(),dates=Object.keys(s).sort(function(a,b){return b.localeCompare(a);});var el=document.getElementById('shredHistoryList');if(!dates.length){el.innerHTML='<div style="text-align:center;color:#6b7280;font-size:12px;padding:10px 0;">No Shred sessions logged yet.</div>';return;}el.innerHTML=dates.map(function(d){var e=s[d],friendly=new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});return'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f9731622;"><div style="font-size:12px;color:#f97316;font-weight:700;">'+friendly+'</div><div style="display:flex;align-items:center;gap:8px;"><span style="background:#f9731622;border:1px solid #f97316;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:800;color:#f97316;">'+(levelLabels[e.level]||e.level)+'</span>'+(e.note?'<span style="font-size:11px;color:#9ca3af;font-style:italic;">"'+e.note+'"</span>':'')+'<button class="remove-btn" onclick="deleteShredFromHistory(\''+d+'\')">🗑</button></div></div>';}).join('')+'<div style="font-size:10px;color:#6b7280;text-align:center;margin-top:8px;">'+dates.length+' session'+(dates.length!==1?'s':'')+' logged</div>';}
+  function deleteShredFromHistory(date){var s=getS();delete s[date];setS(s);renderCal();calcStats();renderShredSnap();renderShredHistory();showToast('Session deleted 🗑');}
+
+  var tk=today();
+  try{var p=JSON.parse(safeGet('protein_'+tk));if(p){var tot=(p.meals||[]).reduce(function(s,m){return s+m.p;},0);document.getElementById('snapProtein').textContent=tot+'g';var pct=Math.min(100,Math.round(tot/(p.goal||100)*100));document.getElementById('snapBar').style.width=pct+'%';document.getElementById('snapNote').textContent=pct+'% of protein goal';}}catch(e){}
+  try{var r=JSON.parse(safeGet('recovery_'+tk));if(r){document.getElementById('snapSleep').textContent=r.sleep?r.sleep+'h':'—';var fm={great:'🔥',good:'💪',sore:'😬',rest:'🛌'};document.getElementById('snapFeel').textContent=fm[r.feel]||'—';}}catch(e){}
+
+  var tips=["<strong>🥩 Protein:</strong> Aim for 100–120g daily. Hit protein within <strong>30 min post-workout</strong>. Prioritize it in your first meal.","<strong>💪 Mind-Muscle:</strong> Slow down every rep. Add a <strong>2-second squeeze</strong> at the top. If you don't feel it in your glutes, you're not building them.","<strong>😴 Recovery:</strong> Muscle is built at <strong>rest</strong>. Aim for 7–9 hours sleep. Take magnesium glycinate at night.","<strong>📈 Progressive Overload:</strong> Add <strong>5 lbs, 1 rep, or 1 set</strong> when current load feels easy. Log lifts so you always know what to beat.","<strong>🔥 Cardio Order:</strong> Always do resistance <strong>before</strong> cardio. Dance Cardio is an evening activity on its dedicated days — never before your weight work."];
+  function showTip(i){document.getElementById('tipDetail').innerHTML=tips[i];document.querySelectorAll('.tip-chip').forEach(function(c,j){c.classList.toggle('active',j===i);});}
+  showTip(0);
+
+  function showToast(msg){var t=document.createElement('div');t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#7c3aed;color:#fff;padding:10px 22px;border-radius:20px;font-size:14px;font-weight:700;z-index:99;';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2200);}
+
+  renderBanner();
+  renderCal();
+  calcStats();
+  renderShredSnap();
+</script>
+</body>
+</html>
